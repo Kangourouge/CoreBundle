@@ -1,0 +1,13 @@
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+        public: false
+        bind:
+            $dataCacheDir: '%kernel.cache_dir%/krg/data'
+
+    KRG\CoreBundle\Security\Voter\AccessVoter:
+        tags: [ 'security.voter' ]
+
+    KRG\CoreBundle\EventListener\EasyAdminSubscriber:
+        tags: [ 'kernel.event_subscriber' ]

@@ -1,0 +1,26 @@
+{
+  "name"       : "kangourouge/core-bundle",
+  "description": "Kangourouge Core Bundle",
+  "type"       : "symfony-bundle",
+  "license"    : "MIT",
+  "authors"    : [
+    {
+      "name" : "Chafiq El Mechrafi",
+      "email": "chafiq.elmechrafi@gmail.com"
+    },
+    {
+      "name" : "Crouzet Thomas",
+      "email": "tcruuuuz@gmail.com"
+    },
+  ],
+  "require"    : {
+    "php"                     : "7.*",
+    "symfony/framework-bundle": "^2.8|^3.0"
+  },
+  "autoload"   : {
+    "psr-0": {
+      "KRG\\CoreBundle": ""
+    }
+  },
+  "target-dir" : "KRG/CoreBundle"
+}
