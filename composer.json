@@ -11,7 +11,7 @@
     {
       "name" : "Crouzet Thomas",
       "email": "tcruuuuz@gmail.com"
-    },
+    }
   ],
   "require"    : {
     "php"                     : "7.*",
