@@ -29,6 +29,7 @@ class AccessVoter extends Voter
 
     protected function supports($attribute, $subject)
     {
+
         return $subject !== null;
     }
 
@@ -38,6 +39,25 @@ class AccessVoter extends Voter
 
         if (!$user instanceof UserInterface) {
             return false;
+        }
+
+        switch($attribute) {
+            case 'new':
+                $attribute = 'C';
+                break;
+            case 'list':
+            case 'search':
+            case 'show':
+                $attribute = 'R';
+                break;
+            case 'edit':
+                $attribute = 'U';
+                break;
+            case 'delete':
+                $attribute = 'D';
+                break;
+            default:
+                break;
         }
 
         $action = '';
@@ -96,8 +116,8 @@ class AccessVoter extends Voter
             return $item->get();
         }
 
-        $excludeAnnotation = ClassAnnotationMapping::getAnnotationForNamespace(Exclude::class, ['AppBundle\Entity', 'AppBundle\Widget', 'KRG']);
-        $isGrantedAnnotation = ClassAnnotationMapping::getAnnotationForNamespace(IsGranted::class, ['AppBundle\Entity', 'AppBundle\Widget', 'KRG']);
+        $excludeAnnotation = ClassAnnotationMapping::getAnnotationForNamespace(Exclude::class, ['AppBundle', 'KRG', 'GEGM']);
+        $isGrantedAnnotation = ClassAnnotationMapping::getAnnotationForNamespace(IsGranted::class, ['AppBundle', 'KRG', 'GEGM']);
 
         $securityAccessList = [
           'exclude' => $excludeAnnotation,

@@ -8,6 +8,3 @@ services:
 
     KRG\CoreBundle\Security\Voter\AccessVoter:
         tags: [ 'security.voter' ]
-
-    KRG\CoreBundle\EventListener\EasyAdminSubscriber:
-        tags: [ 'kernel.event_subscriber' ]
