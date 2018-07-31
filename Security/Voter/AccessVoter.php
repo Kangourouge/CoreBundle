@@ -5,7 +5,9 @@ namespace KRG\CoreBundle\Security\Voter;
 use KRG\CoreBundle\Annotation\Exclude;
 use KRG\CoreBundle\Annotation\IsGranted;
 use KRG\CoreBundle\Mapping\ClassAnnotationMapping;
+use Psr\Http\Message\RequestInterface;
 use Symfony\Component\Cache\Adapter\FilesystemAdapter;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Authorization\Voter\Voter;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -17,9 +19,7 @@ class AccessVoter extends Voter
     const UPDATE    = 'U';
     const DELETE    = 'D';
 
-    /**
-     * @var FilesystemAdapter
-     */
+    /** @var FilesystemAdapter */
     protected $filesystemAdapter;
 
     public function __construct(string $dataCacheDir)
@@ -29,8 +29,7 @@ class AccessVoter extends Voter
 
     protected function supports($attribute, $subject)
     {
-
-        return $subject !== null;
+        return $subject !== null && false === $subject instanceof Request;
     }
 
     protected function voteOnAttribute($attribute, $subject, TokenInterface $token)
@@ -92,9 +91,10 @@ class AccessVoter extends Voter
         return true;
     }
 
-    private function checkRoleAction(TokenInterface $token, $roles, $action) {
+    private function checkRoleAction(TokenInterface $token, $roles, $action)
+    {
         foreach ($roles as $role => $role_action) {
-            foreach($token->getRoles() as $_role) {
+            foreach ($token->getRoles() as $_role) {
                 if ($_role->getRole() === $role) {
                     if ($role_action === 'CRUD') {
                         return true;
@@ -120,15 +120,13 @@ class AccessVoter extends Voter
         $isGrantedAnnotation = ClassAnnotationMapping::getAnnotationForNamespace(IsGranted::class, ['AppBundle', 'KRG', 'GEGM']);
 
         $securityAccessList = [
-          'exclude' => $excludeAnnotation,
-          'isGranted' => $isGrantedAnnotation,
+            'exclude'   => $excludeAnnotation,
+            'isGranted' => $isGrantedAnnotation,
         ];
 
         $item->set($securityAccessList);
         $this->filesystemAdapter->save($item);
 
         return $securityAccessList;
-
     }
-
 }
