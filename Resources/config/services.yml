@@ -4,7 +4,21 @@ services:
         autoconfigure: true
         public: false
         bind:
+            $locale: '%locale%'
             $dataCacheDir: '%kernel.cache_dir%/krg/data'
 
     KRG\CoreBundle\Security\Voter\AccessVoter:
         tags: [ 'security.voter' ]
+
+    KRG\CoreBundle\Form\Extension\DateTypeExtension:
+        public: true
+        tags:
+            - { name: 'form.type_extension', extended_type: 'Symfony\Component\Form\Extension\Core\Type\DateType' }
+
+    KRG\CoreBundle\Form\Extension\DateTimeTypeExtension:
+        public: true
+        tags:
+            - { name: 'form.type_extension', extended_type: 'Symfony\Component\Form\Extension\Core\Type\DateTimeType' }
+
+    KRG\CoreBundle\Model\:
+        resource: '../../Model/*'

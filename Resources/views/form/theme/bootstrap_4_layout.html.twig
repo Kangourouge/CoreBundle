@@ -1,0 +1,28 @@
+{% use 'bootstrap_4_layout.html.twig' %}
+
+{% block form_label -%}
+    {% if label is empty -%}
+        {%- if label_format is not empty -%}
+            {% set label_format = label_format|replace({
+                '%name%': name,
+                '%id%': id,
+            }) %}
+        {%- endif -%}
+    {%- endif -%}
+
+    {{ parent() }}
+{%- endblock form_label %}
+
+
+{%- block button_widget -%}
+    {% if label is empty -%}
+        {%- if label_format is not empty -%}
+            {% set label_format = label_format|replace({
+                '%name%': name,
+                '%id%': id,
+            }) %}
+        {%- endif -%}
+    {%- endif -%}
+
+    {{ parent() }}
+{%- endblock button_widget -%}
