@@ -45,7 +45,9 @@ class ListModel implements ModelInterface
         $filterForm = null;
         if ($options['filter_form'] !== null) {
             /** @var FormInterface $filterForm */
-            $filterForm = $this->formFactory->create($options['filter_form'], $filter);
+            $filterForm = $this->formFactory->create($options['filter_form'], $filter, [
+                'query_builder' => $options['query_builder']
+            ]);
             $filterForm->handleRequest($request);
             if ($filterForm->isValid()) {
                 $filter = $filterForm->getData();
@@ -71,7 +73,7 @@ class ListModel implements ModelInterface
 
         $query = $queryBuilder->getQuery();
 
-        $query->setHydrationMode(Query::HYDRATE_ARRAY);
+        $query->setHydrationMode($this->getHydrationMode());
 
         $paginator = new Paginator($query);
         $paginator->setUseOutputWalkers(false);
@@ -83,8 +85,13 @@ class ListModel implements ModelInterface
 
         $view->offsetSet('page', $page);
         $view->offsetSet('nbPages', $nbPages);
+        $view->offsetSet('nbResults', $paginator->count());
         $view->offsetSet('rows', $paginator->getIterator());
         $view->offsetSet('filter', $filterForm ? $filterForm->createView() : null);
+    }
+
+    protected function getHydrationMode() {
+        return Query::HYDRATE_ARRAY;
     }
 
     public function configureOptions(OptionsResolver $resolver)

@@ -2,6 +2,14 @@
     {% if filter is not null %}
         <div class="form form-filter">
             {{ form(filter) }}
+            <script type="text/javascript">
+                (function () {
+                    var form = document.forms.{{ filter.vars.name }};
+                    form.addEventListener('change', function (event) {
+                        form.submit();
+                    });
+                })();
+            </script>
         </div>
     {% endif %}
 {% endblock %}
@@ -25,12 +33,6 @@
                         {% block tbody_row %}
                         {% endblock %}
                     </tr>
-                {% else %}
-                    <tr>
-                        <td class="text-center">
-                            <em>Empty</em>
-                        </td>
-                    </tr>
                 {% endfor %}
                 </tbody>
             {% endblock %}
@@ -49,42 +51,49 @@
 
 {% block pagination %}
     {% if nbPages > 1 %}
-        <nav aria-label="Page navigation">
-            <ul class="pagination">
-                <li class="page-item {% if page <= 1 %}disabled{% endif %}">
-                    <a class="page-link" href="{{ app.request.pathInfo }}?_page=1" aria-label="Previous">
-                        <span aria-hidden="true">&laquo;</span>
-                        <span class="sr-only">Previous</span>
-                    </a>
-                </li>
 
-                {% for i in max(1, min(page-2, nbPages-4))..max(5, min(page+2, nbPages)) %}
-                <li class="page-item {% if page == i %}active{% endif %}">
-                    <a class="page-link" href="{{ app.request.pathInfo }}?_page={{ i }}">{{ i }}</a>
-                </li>
-                {% endfor %}
+        <div class="d-flex justify-content-center">
+            <nav aria-label="Page navigation">
+                <ul class="pagination">
+                    <li class="page-item {% if page <= 1 %}disabled{% endif %}">
+                        <a class="page-link" href="{{ app.request.pathInfo }}?_page=1" aria-label="Previous">
+                        <span aria-hidden="true">
+                            <span class="icon-arrow-left"></span>
+                        </span>
+                            <span class="sr-only">Previous</span>
+                        </a>
+                    </li>
 
-                <li class="page-item {% if page >= nbPages %}disabled{% endif %}">
-                    <a class="page-link" href="{{ app.request.pathInfo }}?_page={{ nbPages }}" aria-label="Next">
-                        <span aria-hidden="true">&raquo;</span>
-                        <span class="sr-only">Next</span>
-                    </a>
-                </li>
-            </ul>
-            {% if filter is not null %}
-                <script type="text/javascript">
-                    (function () {
-                        var form = document.forms.{{ filter.vars.name }};
-                        Array.prototype.forEach.call(document.querySelectorAll('.pagination a'), function (anchor) {
-                            anchor.addEventListener('click', function (event) {
-                                event.preventDefault();
-                                form.action = anchor.href;
-                                form.submit();
+                    {% for i in max(1, min(page-2, nbPages-4))..max(5, min(page+2, nbPages)) %}
+                        <li class="page-item {% if page == i %}active{% endif %}">
+                            <a class="page-link" href="{{ app.request.pathInfo }}?_page={{ i }}">{{ i }}</a>
+                        </li>
+                    {% endfor %}
+
+                    <li class="page-item {% if page >= nbPages %}disabled{% endif %}">
+                        <a class="page-link" href="{{ app.request.pathInfo }}?_page={{ nbPages }}" aria-label="Next">
+                        <span aria-hidden="true">
+                            <span class="icon-arrow-right"></span>
+                        </span>
+                            <span class="sr-only">Next</span>
+                        </a>
+                    </li>
+                </ul>
+                {% if filter is not null %}
+                    <script type="text/javascript">
+                        (function () {
+                            var form = document.forms.{{ filter.vars.name }};
+                            Array.prototype.forEach.call(document.querySelectorAll('.pagination a'), function (anchor) {
+                                anchor.addEventListener('click', function (event) {
+                                    event.preventDefault();
+                                    form.action = anchor.href;
+                                    form.submit();
+                                });
                             });
-                        });
-                    })();
-                </script>
-            {% endif %}
-        </nav>
+                        })();
+                    </script>
+                {% endif %}
+            </nav>
+        </div>
     {% endif %}
 {% endblock %}

@@ -27,6 +27,18 @@ class ModelView implements \ArrayAccess, \IteratorAggregate, \Countable
         return $this->data;
     }
 
+    /**
+     * @param array $data
+     *
+     * @return ModelView
+     */
+    public function setData(array $data): ModelView
+    {
+        $this->data = $data;
+
+        return $this;
+    }
+
     public function count()
     {
         return count($this->data);

@@ -2,23 +2,35 @@
 
 namespace KRG\CoreBundle\Model;
 
+use Symfony\Component\HttpFoundation\RedirectResponse;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Routing\Router;
+use Symfony\Component\Templating\EngineInterface;
 
 class ModelFactory
 {
-    /**
-     * @var ModelRegistry
-     */
+    /** @var ModelRegistry */
     private $modelRegistry;
+
+    /** @var EngineInterface */
+    private $templating;
+
+    /** @var Router */
+    private $router;
 
     /**
      * ModelFactory constructor.
      *
      * @param ModelRegistry $modelRegistry
+     * @param EngineInterface $templating
+     * @param Router $router
      */
-    public function __construct(ModelRegistry $modelRegistry)
+    public function __construct(ModelRegistry $modelRegistry, EngineInterface $templating, Router $router)
     {
         $this->modelRegistry = $modelRegistry;
+        $this->templating = $templating;
+        $this->router = $router;
     }
 
     /**
@@ -38,8 +50,22 @@ class ModelFactory
 
         $view = new ModelView();
 
-        $model->build($view, $options);
+        $result = $model->build($view, $options);
 
-        return $view->getData();
+        return $result ?: $view->getData();
+    }
+
+    public function render($view, $name, array $options = []) {
+        $model = $this->create($name, $options);
+
+        if ($model instanceof Response) {
+            return $model;
+        }
+
+        if ($model instanceof ModelPath) {
+            return new RedirectResponse($this->router->generate($model->offsetGet('route'), $model->offsetGet('parameters')));
+        }
+
+        return $this->templating->renderResponse($view, $model);
     }
 }

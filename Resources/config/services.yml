@@ -22,3 +22,6 @@ services:
 
     KRG\CoreBundle\Model\:
         resource: '../../Model/*'
+        exclude: '../../Model/{ModelView,ModelPath}.php'
+        public: true
+        tags: ['krg.model']

@@ -36,7 +36,7 @@ class ModelRegistry
     public function get($name)
     {
         if (!in_array($name, $this->models)) {
-            throw new \InvalidArgumentException(sprintf('The sender "%s" is not registered with the service container.', $name));
+            throw new \InvalidArgumentException(sprintf('The model "%s" is not registered with the service container.', $name));
         }
 
         if (!isset($this->services[$name])) {

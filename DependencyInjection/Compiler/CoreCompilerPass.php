@@ -4,6 +4,7 @@ namespace KRG\CoreBundle\DependencyInjection\Compiler;
 use KRG\CmsBundle\Form\FilterRegistry;
 use KRG\CmsBundle\Routing\Generator\UrlGenerator;
 use KRG\CmsBundle\Routing\Generator\Dumper\PhpGeneratorDumper;
+use KRG\CoreBundle\Model\ModelInterface;
 use KRG\CoreBundle\Model\ModelRegistry;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -22,9 +23,12 @@ class CoreCompilerPass implements CompilerPassInterface
             return;
         }
 
-        $taggedServices = $container->findTaggedServiceIds('krg.model');
+        $taggedServices = array_keys($container->findTaggedServiceIds('krg.model'));
+        $modelClasses = array_filter($taggedServices, function ($className) {
+            return in_array(ModelInterface::class, class_implements($className));
+        });
         $definition = $container->findDefinition(ModelRegistry::class);
-        $definition->setArgument(1, array_keys($taggedServices));
+        $definition->setArgument(1, $modelClasses);
     }
 
 }
