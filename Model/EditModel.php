@@ -43,7 +43,7 @@ class EditModel implements ModelInterface
         if ($form->isSubmitted() && $form->isValid()) {
             $data = $form->getData();
 
-            call_user_func($parameters, $data);
+            call_user_func($options['on_submit'], $data);
 
             $parameters = $options['redirect_parameters'];
             if (is_callable($parameters)) {
