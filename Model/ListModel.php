@@ -46,7 +46,8 @@ class ListModel implements ModelInterface
         if ($options['filter_form'] !== null) {
             /** @var FormInterface $filterForm */
             $filterForm = $this->formFactory->create($options['filter_form'], $filter, [
-                'query_builder' => $options['query_builder']
+                'query_builder' => $options['query_builder'],
+                'action' => '?_page=1'
             ]);
             $filterForm->handleRequest($request);
             if ($filterForm->isValid()) {

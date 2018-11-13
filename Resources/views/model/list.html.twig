@@ -1,15 +1,8 @@
 {% block filter %}
     {% if filter is not null %}
         <div class="form form-filter">
+            {% form_theme filter 'KRGDoctrineExtensionBundle:Form:filter.html.twig' %}
             {{ form(filter) }}
-            <script type="text/javascript">
-                (function () {
-                    var form = document.forms.{{ filter.vars.name }};
-                    form.addEventListener('change', function (event) {
-                        form.submit();
-                    });
-                })();
-            </script>
         </div>
     {% endif %}
 {% endblock %}
