@@ -49,6 +49,9 @@ class ListModel implements ModelInterface
                 'query_builder' => $options['query_builder'],
                 'action' => '?_page=1'
             ]);
+
+            $filter = $filterForm->getData();
+
             $filterForm->handleRequest($request);
             if ($filterForm->isValid()) {
                 $filter = $filterForm->getData();
