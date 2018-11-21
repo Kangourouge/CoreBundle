@@ -25,3 +25,8 @@ services:
         exclude: '../../Model/{ModelView,ModelPath}.php'
         public: true
         tags: ['krg.model']
+
+    Twig_Extensions_Extension_Intl:
+        class: Twig_Extensions_Extension_Intl
+        tags:
+            - { name: twig.extension }
