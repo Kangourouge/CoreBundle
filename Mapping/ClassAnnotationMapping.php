@@ -2,7 +2,6 @@
 
 namespace KRG\CoreBundle\Mapping;
 
-use Doctrine\Common\Annotations\AnnotationException;
 use Doctrine\Common\Annotations\AnnotationReader;
 
 class ClassAnnotationMapping

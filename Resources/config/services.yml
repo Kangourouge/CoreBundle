@@ -6,6 +6,7 @@ services:
         bind:
             $locale: '%locale%'
             $dataCacheDir: '%kernel.cache_dir%/krg/data'
+            $webDir: '%kernel.root_dir%/../web'
 
     KRG\CoreBundle\Security\Voter\AccessVoter:
         tags: [ 'security.voter' ]
@@ -20,11 +21,23 @@ services:
         tags:
             - { name: 'form.type_extension', extended_type: 'Symfony\Component\Form\Extension\Core\Type\DateTimeType' }
 
+    KRG\CoreBundle\Form\Type\:
+        resource: '../../Form/Type'
+        tags: ['form.type']
+
+    KRG\CoreBundle\Export\:
+        resource: '../../Export/*Export.php'
+        public: true
+
     KRG\CoreBundle\Model\:
         resource: '../../Model/*'
         exclude: '../../Model/{ModelView,ModelPath}.php'
         public: true
         tags: ['krg.model']
+
+    KRG\CoreBundle\Serializer\:
+        resource: '../../Serializer'
+        public: true
 
     Twig_Extensions_Extension_Intl:
         class: Twig_Extensions_Extension_Intl

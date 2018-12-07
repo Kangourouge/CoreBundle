@@ -1,14 +1,10 @@
 <?php
 namespace KRG\CoreBundle\DependencyInjection\Compiler;
 
-use KRG\CmsBundle\Form\FilterRegistry;
-use KRG\CmsBundle\Routing\Generator\UrlGenerator;
-use KRG\CmsBundle\Routing\Generator\Dumper\PhpGeneratorDumper;
 use KRG\CoreBundle\Model\ModelInterface;
 use KRG\CoreBundle\Model\ModelRegistry;
-use Symfony\Component\DependencyInjection\Reference;
-use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
+use Symfony\Component\DependencyInjection\ContainerBuilder;
 
 class CoreCompilerPass implements CompilerPassInterface
 {

@@ -2,8 +2,6 @@
 
 namespace KRG\CoreBundle\Model;
 
-use Traversable;
-
 class ModelView implements \ArrayAccess, \IteratorAggregate, \Countable
 {
     /** @var array */

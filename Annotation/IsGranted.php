@@ -1,8 +1,8 @@
 <?php
 
 namespace KRG\CoreBundle\Annotation;
-use Doctrine\Common\Annotations\Annotation\Target;
 use Doctrine\Common\Annotations\Annotation\Required;
+use Doctrine\Common\Annotations\Annotation\Target;
 
 /**
  * @Annotation
