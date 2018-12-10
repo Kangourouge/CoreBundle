@@ -34,6 +34,11 @@ class IterableResultDecorator extends AbstractIterableResultDecorator
         foreach ($this->fields as $field) {
             try {
                 $value = $this->propertyAccessor->getValue($item[0], $field['property_path']);
+                if (is_object($value)) {
+                    if (method_exists($value, 'getName')) {
+                        $value = call_user_func([$value, 'getName']);
+                    }
+                }
                 $row[] = (string) $value;
             } catch (UnexpectedTypeException $exception) {
                 $row[] = null;

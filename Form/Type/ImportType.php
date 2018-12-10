@@ -8,21 +8,24 @@ use KRG\CoreBundle\Form\DataTransformer\CsvImportDataTransformer;
 use KRG\CoreBundle\Model\ImportModel;
 use KRG\CoreBundle\Model\ModelFactory;
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\CollectionType;
+use Symfony\Component\Form\Extension\Core\Type\FileType;
+use Symfony\Component\Form\Extension\Core\Type\HiddenType;
 use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\Form\FormEvent;
+use Symfony\Component\Form\FormEvents;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\Form\FormView;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Symfony\Component\OptionsResolver\Options;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 use Symfony\Component\Translation\TranslatorInterface;
 
-class ImportFileType extends AbstractType
+class ImportType extends AbstractType
 {
-    /** @var SessionInterface */
-    protected $session;
-
     /** @var EntityManagerInterface */
     protected $entityManager;
 
@@ -35,14 +38,12 @@ class ImportFileType extends AbstractType
     /**
      * ImportFileType constructor.
      *
-     * @param SessionInterface $session
      * @param EntityManagerInterface $entityManager
      * @param ModelFactory $modelFactory
      * @param TranslatorInterface $translator
      */
-    public function __construct(SessionInterface $session, EntityManagerInterface $entityManager, ModelFactory $modelFactory, TranslatorInterface $translator)
+    public function __construct(EntityManagerInterface $entityManager, ModelFactory $modelFactory, TranslatorInterface $translator)
     {
-        $this->session = $session;
         $this->entityManager = $entityManager;
         $this->modelFactory = $modelFactory;
         $this->translator = $translator;
@@ -50,18 +51,26 @@ class ImportFileType extends AbstractType
 
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
-        $dataTransformer = new CsvImportDataTransformer($this->session, $options['normalizer'], $options['model']);
-
-        $builder->add('entities', CollectionType::class, [
-            'entry_type' => $options['entry_type'],
-            'entry_options' => ['label' => false, 'attr' => ['class' => 'form-collection-inline']],
-            'allow_add' => false,
-            'allow_delete' => false,
-            'label' => false,
-            'attr' => ['class' => 'form-collection-import']
-        ]);
-
+        $dataTransformer = new CsvImportDataTransformer($this->entityManager, $options['normalizer'], $options['model']);
         $builder->addModelTransformer($dataTransformer);
+
+        $builder
+            ->add('file', FileType::class, [
+                'attr' => ['accept' => 'text/csv'],
+                'required' => false
+            ])
+            ->add('entities', CollectionType::class, [
+                'entry_type' => $options['entry_type'],
+                'entry_options' => ['label' => false, 'attr' => ['class' => 'form-collection-inline']],
+                'allow_add' => false,
+                'allow_delete' => false,
+                'prototype' => false,
+                'label' => false,
+                'attr' => ['class' => 'form-collection-import'],
+            ])
+            ->add('confirm', CheckboxType::class, [
+                'required' => false
+            ]);
     }
 
     public function finishView(FormView $view, FormInterface $form, array $options)
@@ -69,6 +78,13 @@ class ImportFileType extends AbstractType
         $columns = $options['model']['columns'];
         $view->vars['columns'] = $columns;
         $view->vars['column_labels'] = array_column($columns, 'label');
+
+        $content = null;
+
+        $view->vars['attr']['class'] = 'form-import';
+        if (count($view->children['entities']->vars['value']) > 0) {
+            $view->vars['attr']['class'] .= ' form-import-confirm';
+        }
 
         $messages = [];
 
@@ -98,6 +114,7 @@ class ImportFileType extends AbstractType
         $resolver->setRequired(['class', 'entry_type', 'normalizer']);
         $resolver->setDefault('model', null);
         $resolver->setDefault('accept', 'text/csv');
+        $resolver->setDefault('error_bubbling', true);
         $resolver->setAllowedTypes('class', 'string');
         $resolver->setAllowedTypes('model', ['array', 'null']);
         $resolver->setAllowedTypes('entry_type', [FormInterface::class, 'string']);
@@ -109,8 +126,8 @@ class ImportFileType extends AbstractType
         });
     }
 
-    public function getParent()
+    public function getBlockPrefix()
     {
-        return FileinputType::class;
+        return 'import';
     }
 }
