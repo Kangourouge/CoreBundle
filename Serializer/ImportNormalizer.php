@@ -39,7 +39,7 @@ class ImportNormalizer extends ObjectNormalizer
     {
         $nodes = $context['nodes'] ?? [];
         if (is_string($data)) {
-            return $this->findOrCreate($class, $data, false);
+            return $this->findOrCreate($class, $data, $context, false);
         }
 
         if (is_array($data)) {
@@ -79,7 +79,7 @@ class ImportNormalizer extends ObjectNormalizer
                 if ($classMetadata->hasAssociation($key)) {
                     $association = $classMetadata->getAssociationMapping($key);
                     if (is_string($value)) {
-                        $value = $this->findOrCreate($association['targetEntity'], $value, in_array('persist', $association['cascade']));
+                        $value = $this->findOrCreate($association['targetEntity'], $value, $context, in_array('persist', $association['cascade']));
                     } else {
                         if ($association['type'] === ClassMetadataInfo::ONE_TO_MANY || $association['type'] === ClassMetadataInfo::MANY_TO_MANY) {
                             foreach ($value as &$_value) {
@@ -112,9 +112,13 @@ class ImportNormalizer extends ObjectNormalizer
         return $this->entityManager->getMetadataFactory()->hasMetadataFor($type);
     }
 
-    protected function findOrCreate(string $class, string $name, bool $createIfNotExists = true)
+    protected function findOrCreate(string $class, string $name, array $context, bool $createIfNotExists = true)
     {
         $name = trim($name);
+
+        if (isset($context['nodes']['choices'][$name])) {
+            return $context['nodes']['choices'][$name];
+        }
 
         if (strlen($name) === 0) {
             return null;

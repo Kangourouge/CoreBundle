@@ -110,6 +110,7 @@ class ImportModel implements ModelInterface
             $type = 'checkbox';
         }
 
+
         $propertyPath = strstr($view->vars['full_name'], '[');
 
         $node = [
@@ -122,6 +123,10 @@ class ImportModel implements ModelInterface
             'class' => $class,
             'required' => $view->vars['required']
         ];
+
+        if (isset($view->vars['choices'])) {
+            $node['choices'] = array_column($view->vars['choices'], 'data', 'label');
+        }
 
         if ($flatten) {
             return [$node];
