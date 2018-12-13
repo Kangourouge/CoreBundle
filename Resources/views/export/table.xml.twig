@@ -1,0 +1,34 @@
+
+{% for column in table.colgroup %}
+<Column ss:Index="{{ loop.index }}" ss:AutoFitWidth="1"/>
+{% endfor %}
+
+{% for row in table.thead %}
+    <Row ss:StyleID="thead">
+        {% for value in row %}
+            <Cell ss:Index="{{ loop.index }}" ss:StyleID="th">
+                <Data ss:Type="String">{{ value|trans }}</Data>
+            </Cell>
+        {% endfor %}
+    </Row>
+{% endfor %}
+
+{% for row in table.tbody if row %}
+    <Row ss:StyleID="tbody">
+    {% for value in row %}
+        <Cell ss:Index="{{ loop.index }}" ss:StyleID="td">
+            <Data ss:Type="String">{{ value }}</Data>
+        </Cell>
+    {% endfor %}
+    </Row>
+{% endfor %}
+
+{% for row in table.tfoot %}
+    <Row ss:StyleID="tfoot">
+    {% for value in row %}
+        <Cell ss:Index="{{ loop.index }}" ss:StyleID="th">
+            <Data ss:Type="String">{{ value|trans }}</Data>
+        </Cell>
+    {% endfor %}
+    </Row>
+{% endfor %}

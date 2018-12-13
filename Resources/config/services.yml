@@ -7,6 +7,7 @@ services:
             $locale: '%locale%'
             $dataCacheDir: '%kernel.cache_dir%/krg/data'
             $webDir: '%kernel.root_dir%/../web'
+            $exportSettings: '%krg_core_export_settings%'
 
     KRG\CoreBundle\Security\Voter\AccessVoter:
         tags: [ 'security.voter' ]

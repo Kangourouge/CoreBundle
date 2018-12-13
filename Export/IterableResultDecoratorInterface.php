@@ -9,5 +9,12 @@ interface IterableResultDecoratorInterface
      *
      * @return array
      */
-    public function buildRow($item);
+    public function buildRows($item);
+
+    /**
+     * @param $item
+     *
+     * @return bool
+     */
+    public function isValid($item);
 }

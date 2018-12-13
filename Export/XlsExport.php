@@ -18,6 +18,9 @@ class XlsExport implements ExportInterface
     protected $templating;
 
     /** @var string */
+    protected $settings;
+
+    /** @var string */
     protected $webDir;
 
     /**
@@ -26,40 +29,20 @@ class XlsExport implements ExportInterface
      * @param EngineInterface $templating
      * @param string $webDir
      */
-    public function __construct(EngineInterface $templating, string $webDir)
+    public function __construct(EngineInterface $templating, array $exportSettings, string $webDir)
     {
         $this->templating = $templating;
+        $this->settings = $exportSettings['xls'];
         $this->webDir = $webDir;
     }
 
     public function render($filename, array $data, array $options = [])
     {
-        $defaultSetting = [
-            'Author' => 'Kangourouge',
-            'Company' => 'Kangourouge',
-            'Colors' => ['#000000', '#FFFFFF', '#C1C1C1'],
-            'WindowHeight' => 16080,
-            'WindowWidth' => 25600,
-            'WindowTopX' => 29976,
-            'WindowTopY' => 1920,
-            'ProtectStructure' => 'False',
-            'ProtectWindows' => 'False',
-            'DisplayInkNotes' => 'False',
-            'FontName' => 'Arial',
-            'Family' => 'Arial',
-            'Color' => '#000000',
-            'THeadColor' => '#FFFFFF',
-            'THeadBackgroundColor' => '#757575',
-            'TBodyColor' => '#000000',
-            'TBodyBackgroundColor' => '#FFFFFF',
-            'Logo' => '/frontend/images/logo.png',
-            'ImageHeight' => '100',
-            'RowHeight' => '24',
-        ];
+        $template = $options['template'] ?? '@KRGCore/export/layout.xml.twig';
 
-        $data['setting'] = array_replace_recursive($defaultSetting, $data['setting'], $options['setting'] ?? []);
+        $data['settings'] = array_replace_recursive($this->settings, $options['settings'] ?? [], $data['settings'] ?? []);
 
-        $xml = $this->templating->render($options['template'] ?? '@KRGEasyAdminExtension/export/layout.xml.twig', $data);
+        $xml = $this->templating->render($template, $data);
 
         $_filename = sprintf('%s.xml', $filename);
 
@@ -67,22 +50,6 @@ class XlsExport implements ExportInterface
 
         $reader = new \PhpOffice\PhpSpreadsheet\Reader\Xml();
         $spreadsheet = $reader->load($_filename);
-
-        foreach($spreadsheet->getWorksheetIterator() as $worksheet) {
-            foreach($worksheet->getComments() as $comment) {
-                $text = $comment->getText()->getPlainText();
-                if (preg_match('/^krg:image;([0-9]+);([0-9]+);(.+);$/', $text, $match)) {
-                    $cell = $worksheet->getCellByColumnAndRow((int) $match[1], (int) $match[2], false);
-                    if ($cell !== null) {
-                        $drawing = new Drawing();
-                        $drawing->setPath($this->webDir . $match[3]);
-                        $drawing->setResizeProportional(1);
-                        $drawing->setWorksheet($worksheet);
-                        $drawing->setCoordinates($cell->getCoordinate());
-                    }
-                }
-            }
-        }
 
         $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($spreadsheet, "Xlsx");
         $writer->save($filename);

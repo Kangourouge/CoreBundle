@@ -7,49 +7,60 @@ use Symfony\Component\Translation\TranslatorInterface;
 
 class CsvExport implements ExportInterface
 {
+
     /** @var TranslatorInterface */
     protected $translator;
+
+    /** @var array */
+    protected $settings;
 
     /**
      * CsvExport constructor.
      *
      * @param TranslatorInterface $translator
+     * @param array $exportSettings
      */
-    public function __construct(TranslatorInterface $translator)
+    public function __construct(TranslatorInterface $translator, array $exportSettings)
     {
         $this->translator = $translator;
+        $this->settings = $exportSettings['csv'];
     }
 
     public function render($filename, array $data, array $options = [])
     {
-        $handle = fopen($filename, 'w');
+        $settings = array_replace_recursive($this->settings, $options['settings'] ?? []);
 
-        $defaultSetting = [
-            'setting' => [
-                'delimiter' => ',',
-                'enclosure' => '"',
-                'escape_char' => '\\'
-            ]
-        ];
+        $file = new \SplFileObject($filename, 'w');
+        $file->setCsvControl($settings['delimiter'], $settings['enclosure'], $settings['escape_char']);
 
-        $data = array_replace_recursive($defaultSetting, $data, $options);
 
         foreach ($data['sheets'] as $sheet) {
-            $row = [];
-            foreach ($sheet['fields'] as $field) {
-                $row[] = $this->translator->trans($field['label']);
-            }
-            fputcsv($handle, $row, $data['setting']['delimiter'], $data['setting']['enclosure'], $data['setting']['escape_char']);
+            foreach ($sheet['tables'] as $table) {
+                foreach ($table['thead'] as $row) {
+                    if (is_array($row)) {
+                        $row = array_map(function($label) { return $this->translator->trans($label); }, $row);
+                        $file->fputcsv($row);
+                    }
+                }
 
-            foreach ($sheet['rows'] as $row) {
-                fputcsv($handle, $row, $data['setting']['delimiter'], $data['setting']['enclosure'], $data['setting']['escape_char']);
+                foreach ($table['tbody'] as $row) {
+                    if (is_array($row)) {
+                        $file->fputcsv($row);
+                    }
+                }
+
+                foreach ($table['tfoot'] as $row) {
+                    if (is_array($row)) {
+                        $file->fputcsv($row);
+                    }
+                }
+                $file->fputcsv([]);
+                $file->fputcsv([]);
+                $file->fputcsv([]);
             }
         }
 
-        rewind($handle);
-        fclose($handle);
-
-        return new BinaryFileResponse($filename, 200, [
+        return new BinaryFileResponse($file, 200, [
             'Content-Type' => 'text/csv',
             'Content-Disposition' => sprintf('attachment; filename="%s"', basename($filename, true))
         ]);

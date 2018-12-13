@@ -3,6 +3,7 @@
 namespace KRG\CoreBundle\Export;
 
 use Doctrine\ORM\Internal\Hydration\IterableResult;
+use Symfony\Component\PropertyAccess\Exception\AccessException;
 use Symfony\Component\PropertyAccess\Exception\UnexpectedTypeException;
 use Symfony\Component\PropertyAccess\PropertyAccess;
 use Symfony\Component\PropertyAccess\PropertyAccessorInterface;
@@ -28,23 +29,38 @@ class IterableResultDecorator extends AbstractIterableResultDecorator
         $this->propertyAccessor = PropertyAccess::createPropertyAccessor();
     }
 
-    public function buildRow($item)
+    public function isValid($item)
+    {
+        return count($item) === 1;
+    }
+
+    public function buildRows($item)
+    {
+        return $this->toArray($item[0]);
+    }
+
+    public function toArray($item)
     {
         $row = [];
         foreach ($this->fields as $field) {
             try {
-                $value = $this->propertyAccessor->getValue($item[0], $field['property_path']);
+                $value = $this->getValue($item, $field['property_path']);
                 if (is_object($value)) {
                     if (method_exists($value, 'getName')) {
                         $value = call_user_func([$value, 'getName']);
                     }
                 }
                 $row[] = (string) $value;
-            } catch (UnexpectedTypeException $exception) {
+            } catch (\Exception $exception) {
                 $row[] = null;
             }
         }
 
         return $row;
+    }
+
+    public function getValue($item, $propertyPath)
+    {
+        return $this->propertyAccessor->getValue($item, $propertyPath);
     }
 }

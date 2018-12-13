@@ -19,12 +19,19 @@ abstract class AbstractIterableResultDecorator implements \Iterator, IterableRes
         $this->iterableResult = $iterableResult;
     }
 
-    abstract public function buildRow($item);
+    abstract public function isValid($item);
+
+    abstract public function buildRows($item);
 
     public function current()
     {
         $item = $this->iterableResult->current();
-        return $this->buildRow($item);
+
+        if (!$this->isValid($item)) {
+            return null;
+        }
+
+        return $this->buildRows($item);
     }
 
     public function next()

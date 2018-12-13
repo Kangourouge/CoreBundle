@@ -1,16 +1,17 @@
 <?xml version="1.0"?>
 <?mso-application progid="Excel.Sheet"?>
 <Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+          xmlns:o="urn:schemas-microsoft-com:office:office"
           xmlns:x="urn:schemas-microsoft-com:office:excel"
           xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
->
+          xmlns:html="http://www.w3.org/TR/REC-html40">
     <DocumentProperties xmlns="urn:schemas-microsoft-com:office:office">
-        <Author>{{ setting.Author }}</Author>
-        <Company>{{ setting.Company }}</Company>
+        <Author>{{ settings.Author }}</Author>
+        <Company>{{ settings.Company }}</Company>
     </DocumentProperties>
     <OfficeDocumentSettings xmlns="urn:schemas-microsoft-com:office:office">
         <AllowPNG/>
-        {% for idx, color in setting.Colors %}
+        {% for idx, color in settings.Colors %}
             <Color>
                 <Index>{{ idx }}</Index>
                 <RGB>{{ color }}</RGB>
@@ -19,112 +20,91 @@
         <PixelsPerInch>96</PixelsPerInch>
     </OfficeDocumentSettings>
     <ExcelWorkbook xmlns="urn:schemas-microsoft-com:office:excel">
-        <WindowHeight>{{ setting.WindowHeight }}</WindowHeight>
-        <WindowWidth>{{ setting.WindowWidth }}</WindowWidth>
-        <WindowTopX>{{ setting.WindowTopX }}</WindowTopX>
-        <WindowTopY>{{ setting.WindowTopY }}</WindowTopY>
-        <ProtectStructure>{{ setting.ProtectStructure }}</ProtectStructure>
-        <ProtectWindows>{{ setting.ProtectWindows }}</ProtectWindows>
-        <DisplayInkNotes>{{ setting.DisplayInkNotes }}</DisplayInkNotes>
+        <WindowHeight>{{ settings.WindowHeight }}</WindowHeight>
+        <WindowWidth>{{ settings.WindowWidth }}</WindowWidth>
+        <WindowTopX>{{ settings.WindowTopX }}</WindowTopX>
+        <WindowTopY>{{ settings.WindowTopY }}</WindowTopY>
+        <ProtectStructure>{{ settings.ProtectStructure }}</ProtectStructure>
+        <ProtectWindows>{{ settings.ProtectWindows }}</ProtectWindows>
+        <DisplayInkNotes>{{ settings.DisplayInkNotes }}</DisplayInkNotes>
     </ExcelWorkbook>
     <Styles>
-        <Style ss:ID="Default" ss:Name="Normal">
-            <Alignment ss:Vertical="Bottom"/>
-            <Borders/>
-            <Font ss:FontName="{{ setting.FontName }}" x:Family="{{ setting.Family }}" ss:Size="12" ss:Color="{{ setting.Color }}"/>
-            <Interior/>
-            <NumberFormat/>
-            <Protection/>
-        </Style>
-        <Style ss:ID="H1">
-            <Font ss:FontName="{{ setting.FontName }}" x:Family="{{ setting.Family }}" ss:Size="24"/>
-        </Style>
-        <Style ss:ID="H2">
-            <Font ss:FontName="{{ setting.FontName }}" x:Family="{{ setting.Family }}" ss:Size="22"/>
-        </Style>
-        <Style ss:ID="H3">
-            <Font ss:FontName="{{ setting.FontName }}" x:Family="{{ setting.Family }}" ss:Size="20"/>
-        </Style>
-        <Style ss:ID="H4">
-            <Font ss:FontName="{{ setting.FontName }}" x:Family="{{ setting.Family }}" ss:Size="18"/>
-        </Style>
-        <Style ss:ID="H5">
-            <Font ss:FontName="{{ setting.FontName }}" x:Family="{{ setting.Family }}" ss:Size="16"/>
-        </Style>
-        <Style ss:ID="P">
-            <Font ss:FontName="{{ setting.FontName }}" x:Family="{{ setting.Family }}" ss:Size="12"/>
-        </Style>
-        <Style ss:ID="EM">
-            <Font ss:FontName="{{ setting.FontName }}" x:Family="{{ setting.Family }}" ss:Size="10"/>
-        </Style>
+        {% block styles %}
+            <Style ss:ID="default" ss:Name="Normal">
+                <Alignment ss:Vertical="Center"/>
+                <Borders/>
+                <Font ss:FontName="{{ settings.FontName }}" x:Family="{{ settings.Family }}" ss:Size="10" ss:Color="{{ settings.Color }}"/>
+                <Interior/>
+                <NumberFormat/>
+                <Protection/>
+            </Style>
 
-        <Style ss:ID="THead">
-            <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
-            <Borders>
-                <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
-                <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
-                <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
-                <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
-            </Borders>
-            <Font ss:FontName="{{ setting.FontName }}" x:Family="{{ setting.Family }}" ss:Size="12" ss:Color="{{ setting.THeadColor }}" ss:Bold="1"/>
-            <Interior ss:Color="{{ setting.THeadBackgroundColor }}" ss:Pattern="Solid"/>
-        </Style>
+            <Style ss:ID="h1">
+                <Font ss:FontName="{{ settings.FontName }}" x:Family="{{ settings.Family }}" ss:Size="20"/>
+            </Style>
 
-        <Style ss:ID="TBody">
-            <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
-            <Borders>
-                <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
-                <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
-                <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
-                <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
-            </Borders>
-            <Font ss:FontName="{{ setting.FontName }}" x:Family="{{ setting.Family }}" ss:Size="12" ss:Color="{{ setting.TBodyColor }}"/>
-            <Interior ss:Color="{{ setting.TBodyBackgroundColor }}" ss:Pattern="Solid"/>
-        </Style>
+            <Style ss:ID="h2">
+                <Font ss:FontName="{{ settings.FontName }}" x:Family="{{ settings.Family }}" ss:Size="18"/>
+            </Style>
+
+            <Style ss:ID="h3">
+                <Font ss:FontName="{{ settings.FontName }}" x:Family="{{ settings.Family }}" ss:Size="16"/>
+            </Style>
+
+            <Style ss:ID="h4">
+                <Font ss:FontName="{{ settings.FontName }}" x:Family="{{ settings.Family }}" ss:Size="14"/>
+            </Style>
+
+            <Style ss:ID="h5">
+                <Font ss:FontName="{{ settings.FontName }}" x:Family="{{ settings.Family }}" ss:Size="12"/>
+            </Style>
+
+            <Style ss:ID="p">
+                <Font ss:FontName="{{ settings.FontName }}" x:Family="{{ settings.Family }}" ss:Size="10"/>
+            </Style>
+
+            <Style ss:ID="em">
+                <Font ss:FontName="{{ settings.FontName }}" x:Family="{{ settings.Family }}" ss:Size="7"/>
+            </Style>
+
+            <Style ss:ID="td">
+                <Alignment ss:Horizontal="Left" ss:Vertical="Center"/>
+                <Borders>
+                    <Border ss:Position="Top" ss:Color="#212121" ss:LineStyle="Solid" ss:Weight="1"/>
+                    <Border ss:Position="Right" ss:Color="#212121" ss:LineStyle="Solid" ss:Weight="1"/>
+                    <Border ss:Position="Bottom" ss:Color="#212121" ss:LineStyle="Solid" ss:Weight="1"/>
+                    <Border ss:Position="Left" ss:Color="#212121" ss:LineStyle="Solid" ss:Weight="1"/>
+                </Borders>
+                <Font ss:FontName="{{ settings.FontName }}" x:Family="{{ settings.Family }}" ss:Size="10" ss:Color="{{ settings.TBodyColor }}"/>
+                <Interior ss:Color="{{ settings.TBodyBackgroundColor }}" ss:Pattern="Solid"/>
+            </Style>
+
+            <Style ss:ID="th">
+                <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+                <Borders>
+                    <Border ss:Position="Top" ss:Color="#212121" ss:LineStyle="Solid" ss:Weight="1"/>
+                    <Border ss:Position="Right" ss:Color="#212121" ss:LineStyle="Solid" ss:Weight="1"/>
+                    <Border ss:Position="Bottom" ss:Color="#212121" ss:LineStyle="Solid" ss:Weight="1"/>
+                    <Border ss:Position="Left" ss:Color="#212121" ss:LineStyle="Solid" ss:Weight="1"/>
+                </Borders>
+                <Font ss:FontName="{{ settings.FontName }}" x:Family="{{ settings.Family }}" ss:Size="10" ss:Color="{{ settings.THeadColor }}"/>
+                <Interior ss:Color="{{ settings.THeadBackgroundColor }}" ss:Pattern="Solid"/>
+            </Style>
+        {% endblock %}
     </Styles>
 
     {% for sheet in sheets %}
         <Worksheet ss:Name="{{ sheet.label }}">
-            <Table ss:ExpandedColumnCount="{{ sheet.fields|length }}" ss:ExpandedRowCount="{{ 4 + sheet.rows|length }}" x:FullColumns="1" x:FullRows="1">
+            <Table ss:StyleID="table" x:FullColumns="1" x:FullRows="1">
 
-                {% for field in sheet.fields %}
-                    <Column ss:AutoFitWidth="0" ss:Width="{{ field.options.Width|default('90') }}"/>
-                {% endfor %}
+                {% include '@KRGCore/export/header.xml.twig' %}
 
-                <Row ss:AutoFitHeight="1">
-                    <Cell ss:StyleID="H1" ss:Index="0" ss:Height="{{ setting.ImageHeight }}">
-                        <ss:Data ss:Type="Image">{{ setting.Logo }}</ss:Data>
-                    </Cell>
-                </Row>
+                {% for table in sheet.tables %}
+                    {% include sheet.template|default('@KRGCore/export/table.xml.twig') with {table: table} %}
 
-                <Row ss:AutoFitHeight="1">
-                    <Cell ss:StyleID="H1" ss:Index="2">
-                        <Data ss:Type="String"></Data>
-                    </Cell>
-                </Row>
-
-                <Row ss:AutoFitHeight="0" ss:Height="{{ setting.RowHeight }}">
-                    <Cell>
-                        <Data ss:Type="String"></Data>
-                    </Cell>
-                    {% for field in sheet.fields %}
-                        <Cell ss:StyleID="TBody">
-                            <Data ss:Type="String">{{ field.label|trans }}</Data>
-                        </Cell>
-                    {% endfor %}
-                </Row>
-
-                {% for row in sheet.rows %}
-                    <Row ss:AutoFitHeight="0" ss:Height="{{ setting.RowHeight }}">
-                        <Cell>
-                            <Data ss:Type="String"></Data>
-                        </Cell>
-                        {% for value in row %}
-                            <Cell ss:StyleID="TBody">
-                                <Data ss:Type="String">{{ value }}</Data>
-                            </Cell>
-                        {% endfor %}
-                    </Row>
+                    <Row ss:AutoFitHeight="1"></Row>
+                    <Row ss:AutoFitHeight="1"></Row>
+                    <Row ss:AutoFitHeight="1"></Row>
                 {% endfor %}
             </Table>
         </Worksheet>
