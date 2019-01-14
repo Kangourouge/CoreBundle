@@ -27,17 +27,21 @@ class CsvImportDataTransformer implements DataTransformerInterface
     /** @var array */
     protected $model;
 
+    /** @var array */
+    protected $settings;
+
     /**
      * CsvImportDataTransformer constructor.
      */
-    public function __construct(EntityManagerInterface $entityManager, NormalizerInterface $normalizer, array $model)
+    public function __construct(EntityManagerInterface $entityManager, NormalizerInterface $normalizer, array $model, array $settings)
     {
         $this->entityManager = $entityManager;
         $this->serializer = new Serializer(
             [$normalizer, new ObjectNormalizer(), new ArrayDenormalizer()],
-            [new CsvEncoder(), new JsonEncoder()]
+            [new CsvEncoder($settings['delimiter'], $settings['enclosure'], $settings['escape_char']), new JsonEncoder()]
         );
         $this->model = $model;
+        $this->settings = $settings;
     }
 
     public function denormalize($data)
@@ -87,9 +91,13 @@ class CsvImportDataTransformer implements DataTransformerInterface
 
             $header = array_column($columns, 'property_path');
 
+            $fd = fopen('php://memory', 'r+');
+            fputcsv($fd, $header, $this->settings['delimiter'], $this->settings['enclosure'], $this->settings['escape_char']);
+            rewind($fd);
+
             $csv = file_get_contents($value['file']->getPathname());
             $csv = preg_replace("/^\ *#.*\n/", '', $csv);
-            $content = sprintf("%s\n%s", implode(',', $header), $csv);
+            $content = sprintf("%s\n%s", stream_get_contents($fd), $csv);
 
             file_put_contents($filename, $content);
 

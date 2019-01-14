@@ -35,23 +35,28 @@ class ImportType extends AbstractType
     /** @var TranslatorInterface */
     protected $translator;
 
+    /** @var array */
+    protected $exportSettings;
+
     /**
-     * ImportFileType constructor.
+     * ImportType constructor.
      *
      * @param EntityManagerInterface $entityManager
      * @param ModelFactory $modelFactory
      * @param TranslatorInterface $translator
+     * @param array $exportSettings
      */
-    public function __construct(EntityManagerInterface $entityManager, ModelFactory $modelFactory, TranslatorInterface $translator)
+    public function __construct(EntityManagerInterface $entityManager, ModelFactory $modelFactory, TranslatorInterface $translator, array $exportSettings)
     {
         $this->entityManager = $entityManager;
         $this->modelFactory = $modelFactory;
         $this->translator = $translator;
+        $this->exportSettings = $exportSettings;
     }
 
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
-        $dataTransformer = new CsvImportDataTransformer($this->entityManager, $options['normalizer'], $options['model']);
+        $dataTransformer = new CsvImportDataTransformer($this->entityManager, $options['normalizer'], $options['model'], $this->exportSettings['csv']);
         $builder->addModelTransformer($dataTransformer);
 
         $builder
@@ -78,6 +83,11 @@ class ImportType extends AbstractType
         $columns = $options['model']['columns'];
         $view->vars['columns'] = $columns;
         $view->vars['column_labels'] = array_column($columns, 'label');
+
+        $fd = fopen('php://memory', 'r+');
+        fputcsv($fd, $view->vars['column_labels'], $this->exportSettings['csv']['delimiter'], $this->exportSettings['csv']['enclosure'], $this->exportSettings['csv']['escape_char']);
+        rewind($fd);
+        $view->vars['csv_prototype'] = stream_get_contents($fd);
 
         $content = null;
 
