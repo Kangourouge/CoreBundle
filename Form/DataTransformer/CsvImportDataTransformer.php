@@ -96,8 +96,11 @@ class CsvImportDataTransformer implements DataTransformerInterface
             rewind($fd);
 
             $csv = file_get_contents($value['file']->getPathname());
-            $csv = preg_replace("/^\ *#.*\n/", '', $csv);
+            $csv = preg_replace("/^[\t\ ]*#.*\n/", '', $csv);
+
             $content = sprintf("%s\n%s", stream_get_contents($fd), $csv);
+
+            $content = preg_replace("/(\R){2,}/", "$1", $content);
 
             file_put_contents($filename, $content);
 
