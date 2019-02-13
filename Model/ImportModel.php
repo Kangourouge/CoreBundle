@@ -2,6 +2,8 @@
 
 namespace KRG\CoreBundle\Model;
 
+use Doctrine\Common\Annotations\Reader;
+use KRG\CoreBundle\Annotation\Id;
 use Symfony\Component\Form\FormFactoryInterface;
 use Symfony\Component\Form\FormTypeInterface;
 use Symfony\Component\Form\FormView;
@@ -16,28 +18,21 @@ class ImportModel implements ModelInterface
     /** @var TranslatorInterface */
     protected $translator;
 
-    /** @var array */
-    protected static $ID_NODE = [
-        'label' => '#Id',
-        'name'  => 'id',
-        'full_name' => 'id',
-        'type' => 'identifier',
-        'class' => null,
-        'property_path' => 'id',
-        'property' => 'id',
-        'required' => false
-    ];
+    /** @var Reader */
+    protected $reader;
 
     /**
      * ImportModel constructor.
      *
      * @param FormFactoryInterface $formFactory
      * @param TranslatorInterface $translator
+     * @param Reader $reader
      */
-    public function __construct(FormFactoryInterface $formFactory, TranslatorInterface $translator)
+    public function __construct(FormFactoryInterface $formFactory, TranslatorInterface $translator, Reader $reader)
     {
         $this->formFactory = $formFactory;
         $this->translator = $translator;
+        $this->reader = $reader;
     }
 
     public function build(ModelView $view, array $options)
@@ -45,9 +40,17 @@ class ImportModel implements ModelInterface
         $form = $this->formFactory->create($options['type'], null, ['csrf_protection' => false]);
         $formView = $form->createView();
 
+        $className = $form->getConfig()->getDataClass();
+
+        $annotation = $this->reader->getClassAnnotation(new \ReflectionClass($className), Id::class);
+        $identifiers = $annotation !== null ? $annotation->fields : ['id'];
+
+        $columns = $this->getColumns($formView, $identifiers);
+        $nodes = $this->getNodes($formView, $identifiers);
+
         $view->offsetSet('class', $form->getConfig()->getDataClass());
-        $view->offsetSet('columns', $this->getColumns($formView));
-        $view->offsetSet('nodes', $this->getNodes($formView));
+        $view->offsetSet('columns', $columns);
+        $view->offsetSet('nodes', $nodes);
     }
 
     public function configureOptions(OptionsResolver $resolver)
@@ -62,7 +65,7 @@ class ImportModel implements ModelInterface
      *
      * @return array
      */
-    protected function getNode(FormView $view, bool $flatten = false, string $prefixLabel = '')
+    protected function getNode(FormView $view, array $identifiers, bool $flatten = false, string $prefixLabel = '')
     {
         if (in_array('hidden', $view->vars['block_prefixes'])) {
             return [];
@@ -78,13 +81,19 @@ class ImportModel implements ModelInterface
             }
 
             foreach($view->children as $child) {
-                $children[$child->vars['name']] = $this->getNode($child, $flatten, $prefixLabel);
+                $children[$child->vars['name']] = $this->getNode($child, $identifiers, $flatten, $prefixLabel);
             }
 
             if ($flatten) {
                 return call_user_func_array('array_merge', $children);
             }
             return $children;
+        }
+
+        $property = strstr($view->vars['full_name'], '[');
+        $propertyPath = preg_replace(['/\]\[/', '/[\[\]]/'], ['.', ''], $property);
+        if (in_array($propertyPath, $identifiers)) {
+            return [];
         }
 
         $type = 'text';
@@ -110,15 +119,12 @@ class ImportModel implements ModelInterface
             $type = 'checkbox';
         }
 
-
-        $propertyPath = strstr($view->vars['full_name'], '[');
-
         $node = [
             'label' => strlen($prefixLabel) > 0 ? sprintf('%s - %s', $prefixLabel, $label) : $label,
             'name' => $view->vars['name'],
             'full_name' => $view->vars['full_name'],
-            'property_path' => preg_replace(['/\]\[/', '/[\[\]]/'], ['.', ''], $propertyPath),
-            'property' => $propertyPath,
+            'property_path' => $propertyPath,
+            'property' => $property,
             'type' => $type,
             'class' => $class,
             'required' => $view->vars['required']
@@ -153,13 +159,63 @@ class ImportModel implements ModelInterface
         return $transLabel;
     }
 
-    public function getColumns(FormView $view)
+    public function getIdentifiers(array $identifiers)
     {
-        return array_merge([self::$ID_NODE], $this->getNode($view, true));
+        $nodes = [];
+
+        foreach($identifiers as $identifier) {
+            $nodes[] = [
+                'label' => '#' . $identifier,
+                'name'  => $identifier,
+                'full_name' => $identifier,
+                'type' => 'identifier',
+                'class' => null,
+                'property_path' => $identifier,
+                'property' => $identifier,
+                'required' => false
+            ];
+        }
+
+        return $nodes;
     }
 
-    public function getNodes(FormView $view)
+    public function getColumns(FormView $view, array $identifiers)
     {
-        return array_merge(['id' => self::$ID_NODE], $this->getNode($view));
+        $nodes = $this->getNode($view, $identifiers, true);
+        $this->addIdentifiers($nodes, $identifiers);
+
+        return $nodes;
+    }
+
+    public function getNodes(FormView $view, array $identifiers)
+    {
+        $nodes = $this->getNode($view, [], false);
+
+        return $nodes;
+    }
+
+    protected function addIdentifiers(array &$nodes, array $identifiers)
+    {
+        $properties = array_column($identifiers, 'property_path');
+
+        $identifiers = array_reverse($identifiers);
+
+        foreach($identifiers as $identifier) {
+            if (!in_array($identifier, $properties)) {
+                array_unshift($nodes, [
+                    'label' => '#' . $identifier,
+                    'name'  => $identifier,
+                    'full_name' => $identifier,
+                    'type' => 'text',
+                    'class' => null,
+                    'property_path' => $identifier,
+                    'property' => $identifier,
+                    'identifier' => true,
+                    'required' => false
+                ]);
+            }
+        }
+
+        return $nodes;
     }
 }

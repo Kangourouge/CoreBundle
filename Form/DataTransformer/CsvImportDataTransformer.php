@@ -24,6 +24,9 @@ class CsvImportDataTransformer implements DataTransformerInterface
     /** @var Serializer */
     protected $serialize;
 
+    /** @var NormalizerInterface */
+    protected $normalizer;
+
     /** @var array */
     protected $model;
 
@@ -36,8 +39,9 @@ class CsvImportDataTransformer implements DataTransformerInterface
     public function __construct(EntityManagerInterface $entityManager, NormalizerInterface $normalizer, array $model, array $settings)
     {
         $this->entityManager = $entityManager;
+        $this->normalizer = $normalizer;
         $this->serializer = new Serializer(
-            [$normalizer, new ObjectNormalizer(), new ArrayDenormalizer()],
+            [$this->normalizer, new ObjectNormalizer(), new ArrayDenormalizer()],
             [new CsvEncoder($settings['delimiter'], $settings['enclosure'], $settings['escape_char']), new JsonEncoder()]
         );
         $this->model = $model;
@@ -47,7 +51,9 @@ class CsvImportDataTransformer implements DataTransformerInterface
     public function denormalize($data)
     {
         try {
-            return $this->serializer->deserialize($data, sprintf('%s[]', $this->model['class']), 'csv', ['nodes' => $this->model['nodes']]);
+            $entities = $this->serializer->deserialize($data, sprintf('%s[]', $this->model['class']), 'csv', ['nodes' => $this->model['nodes']]);
+            $entities = array_filter($entities);
+            return $entities;
         } catch (\Exception $exception) {
             throw new TransformationFailedException($exception->getMessage());
         }
@@ -97,6 +103,7 @@ class CsvImportDataTransformer implements DataTransformerInterface
 
             $csv = file_get_contents($value['file']->getPathname());
             $csv = preg_replace("/^[\t\ ]*#.*\n/", '', $csv);
+            $csv = preg_replace("/\n#.*/", '', $csv);
 
             $content = sprintf("%s\n%s", stream_get_contents($fd), $csv);
 
@@ -104,7 +111,7 @@ class CsvImportDataTransformer implements DataTransformerInterface
 
             file_put_contents($filename, $content);
 
-            $value['entities'] = $this->denormalize($content);
+            $value['entities'] = array_filter($this->denormalize($content));
         }
 
         return $value;

@@ -14,6 +14,9 @@ class ImportNormalizer extends ObjectNormalizer
     /** @var array */
     protected $cache;
 
+    /** @var array */
+    protected $exceptions;
+
     /**
      * ImportNormalizer constructor.
      *
@@ -25,6 +28,7 @@ class ImportNormalizer extends ObjectNormalizer
         parent::__construct();
         $this->entityManager = $entityManager;
         $this->cache = [];
+        $this->exceptions = [];
     }
 
     /**
@@ -37,74 +41,72 @@ class ImportNormalizer extends ObjectNormalizer
 
     public function denormalize($data, $class, $format = null, array $context = [])
     {
-        $nodes = $context['nodes'] ?? [];
-        if (is_string($data)) {
-            return $this->findOrCreate($class, $data, $context, false);
-        }
+        try {
+            $nodes = $context['nodes'] ?? [];
 
-        if (is_array($data)) {
-            if (count($data) === 0) {
-                return null;
+            if (is_string($data)) {
+                return $this->findByNameOrCreate($class, $data, $context, false);
             }
 
-            $object = null;
-
-            if (isset($data['id']) && is_numeric($data['id'])) {
-                $object = $this->entityManager->find($class, $data['id']);
-                if ($data === null) {
-                    throw new \Exception('Object not found');
-                }
-            } else {
-                $object = $this->entityManager->getClassMetadata($class)->getReflectionClass()->newInstance();
-            }
-
-            unset($data['id']);
-
-            $classMetadata = $this->entityManager->getClassMetadata($class);
-
-            foreach ($data as $key => $value) {
-
-                $_nodes = $nodes[$key] ?? [];
-
-                if (is_string($value) && strlen($value) === 0) {
-                    $value = null;
-                    continue;
+            if (is_array($data)) {
+                if (count($data) === 0) {
+                    return null;
                 }
 
-                if (is_array($value) && count(array_filter($value)) === 0) {
-                    $value = null;
-                    continue;
-                }
+                $object = $this->findOrCreate($data, $class, $format, $context);
 
-                if ($classMetadata->hasAssociation($key)) {
-                    $association = $classMetadata->getAssociationMapping($key);
-                    if (is_string($value)) {
-                        $value = $this->findOrCreate($association['targetEntity'], $value, $context, in_array('persist', $association['cascade']));
-                    } else {
-                        if ($association['type'] === ClassMetadataInfo::ONE_TO_MANY || $association['type'] === ClassMetadataInfo::MANY_TO_MANY) {
-                            foreach ($value as &$_value) {
-                                $_value = $this->denormalize($_value, $association['targetEntity'], $format, ['nodes' => $_nodes]);
-                            }
-                            unset($_value);
-                            $value = array_values($value);
+                $classMetadata = $this->entityManager->getClassMetadata($class);
+
+                foreach ($nodes as $key => $config) {
+
+                    $value = $data[$key];
+
+                    $_nodes = $nodes[$key] ?? [];
+
+                    if (is_string($value) && strlen($value) === 0) {
+                        $value = null;
+                        continue;
+                    }
+
+                    if (is_array($value) && count(array_filter($value)) === 0) {
+                        $value = null;
+                        continue;
+                    }
+
+                    if ($classMetadata->hasAssociation($key)) {
+                        $association = $classMetadata->getAssociationMapping($key);
+                        if (is_string($value)) {
+                            $value = $this->findByNameOrCreate($association['targetEntity'], $value, $context, in_array('persist', $association['cascade']));
                         } else {
-                            $value = $this->denormalize($value, $association['targetEntity'], $format, ['nodes' => $_nodes]);
+                            if ($association['type'] === ClassMetadataInfo::ONE_TO_MANY || $association['type'] === ClassMetadataInfo::MANY_TO_MANY) {
+                                foreach ($value as &$_value) {
+                                    $_value = $this->denormalize($_value, $association['targetEntity'], $format, ['nodes' => $_nodes]);
+                                }
+                                unset($_value);
+                                $value = array_values($value);
+                            } else {
+                                $value = $this->denormalize($value, $association['targetEntity'], $format, ['nodes' => $_nodes]);
+                            }
+                        }
+                    } else {
+                        if (!$classMetadata->hasField($key)) {
+                            if (isset($_nodes['class'])) {
+                                $value = $this->denormalize($value, $_nodes['class'], $format, ['nodes' => $_nodes]);
+                            }
                         }
                     }
-                }
-                else if (!$classMetadata->hasField($key)) {
-                    if (isset($_nodes['class'])) {
-                        $value = $this->denormalize($value, $_nodes['class'], $format, ['nodes' => $_nodes]);
-                    }
+
+                    $this->propertyAccessor->setValue($object, $key, $value);
                 }
 
-                $this->propertyAccessor->setValue($object, $key, $value);
+                return $object;
             }
 
-            return $object;
+            return parent::denormalize($data, $class, $format, $context);
+        } catch (\Exception $exception) {
+            $this->exceptions[] = $exception;
+            return null;
         }
-
-        return parent::denormalize($data, $class, $format, $context);
     }
 
     public function supportsDenormalization($data, $type, $format = null)
@@ -112,7 +114,17 @@ class ImportNormalizer extends ObjectNormalizer
         return $this->entityManager->getMetadataFactory()->hasMetadataFor($type);
     }
 
-    protected function findOrCreate(string $class, string $name, array $context, bool $createIfNotExists = true)
+    protected function findOrCreate($data, $class, $format = null, array $context = [])
+    {
+        $object = $this->entityManager->find($class, $data['id']);
+        if ($object === null) {
+            throw new \Exception('Object not found');
+        }
+
+        return $object;
+    }
+
+    protected function findByNameOrCreate(string $class, string $name, array $context, bool $createIfNotExists = true)
     {
         $name = trim($name);
 
@@ -146,5 +158,13 @@ class ImportNormalizer extends ObjectNormalizer
         $this->cache[$class][$name] = $entity;
 
         return $entity;
+    }
+
+    /**
+     * @return array
+     */
+    public function getExceptions(): array
+    {
+        return $this->exceptions;
     }
 }

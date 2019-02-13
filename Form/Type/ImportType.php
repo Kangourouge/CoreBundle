@@ -7,6 +7,7 @@ use EMC\FileinputBundle\Form\Type\FileinputType;
 use KRG\CoreBundle\Form\DataTransformer\CsvImportDataTransformer;
 use KRG\CoreBundle\Model\ImportModel;
 use KRG\CoreBundle\Model\ModelFactory;
+use KRG\CoreBundle\Serializer\ImportNormalizer;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\CollectionType;
@@ -96,27 +97,37 @@ class ImportType extends AbstractType
             $view->vars['attr']['class'] .= ' form-import-confirm';
         }
 
-        $messages = [];
+        $messages = [
+            'info' => [],
+            'warning' => [],
+            'danger' => []
+        ];
 
         $uow = $this->entityManager->getUnitOfWork();
 
         foreach($uow->getScheduledEntityInsertions() as $entity) {
-            $messages[] = $this->getMessage($entity, 'CREATE');
+            $messages['info'][] = $this->getMessage($entity);
         }
         foreach($uow->getScheduledEntityUpdates() as $entity) {
-            $messages[] = $this->getMessage($entity, 'UPDATE');
+            $messages['info'][] = $this->getMessage($entity);
         }
         foreach($uow->getScheduledEntityDeletions() as $entity) {
-            $messages[] = $this->getMessage($entity, 'REMOVE');
+            $messages['warning'][] = $this->getMessage($entity);
+        }
+
+        /** @var ImportNormalizer $normalizer */
+        $normalizer = $options['normalizer'];
+        foreach($normalizer->getExceptions() as $exception) {
+            $messages['danger'][] = $exception->getMessage();
         }
 
         $view->vars['messages'] = $messages;
     }
 
-    protected function getMessage($entity, $tag)
+    protected function getMessage($entity)
     {
         $className = substr(get_class($entity), strrpos(get_class($entity), '\\') + 1);
-        return sprintf('[%s] %s "%s"', $tag, $this->translator->trans($className), (string) $entity);
+        return sprintf('%s "%s"', $this->translator->trans($className), (string) $entity);
     }
 
     public function configureOptions(OptionsResolver $resolver)
