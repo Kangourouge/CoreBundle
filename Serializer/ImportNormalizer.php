@@ -58,7 +58,9 @@ class ImportNormalizer extends ObjectNormalizer
                 $classMetadata = $this->entityManager->getClassMetadata($class);
 
                 foreach ($nodes as $key => $config) {
-
+                    if (!isset($data[$key])) {
+                        continue;
+                    }
                     $value = $data[$key];
 
                     $_nodes = $nodes[$key] ?? [];
@@ -116,9 +118,13 @@ class ImportNormalizer extends ObjectNormalizer
 
     protected function findOrCreate($data, $class, $format = null, array $context = [])
     {
-        $object = $this->entityManager->find($class, $data['id']);
-        if ($object === null) {
-            throw new \Exception('Object not found');
+        if (isset($data['id']) && is_numeric($data['id'])) {
+            $object = $this->entityManager->find($class, $data['id']);
+            if ($data === null) {
+                throw new \Exception('Object not found');
+            }
+        } else {
+            $object = $this->entityManager->getClassMetadata($class)->getReflectionClass()->newInstance();
         }
 
         return $object;

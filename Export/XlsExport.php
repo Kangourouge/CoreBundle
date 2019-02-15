@@ -55,7 +55,7 @@ class XlsExport implements ExportInterface
         $writer->save($filename);
 
         return new BinaryFileResponse($filename, 200, [
-            'Content-Type' => 'application/vnd.ms-excel',
+            'Content-Type' => 'application/vnd.ms-excel; charset=UTF-8',
             'Content-Disposition' => sprintf('attachment; filename="%s"', basename($filename, true))
         ]);
     }
