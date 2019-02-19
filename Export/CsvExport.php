@@ -61,7 +61,7 @@ class CsvExport implements ExportInterface
         }
 
         return new BinaryFileResponse($file, 200, [
-            'Content-Type' => 'text/csv',
+            'Content-Type' => 'text/csv; charset=UTF-8',
             'Content-Disposition' => sprintf('attachment; filename="%s"', basename($filename, true))
         ]);
     }
