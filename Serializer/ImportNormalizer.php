@@ -61,21 +61,27 @@ class ImportNormalizer extends ObjectNormalizer
                     if (!isset($data[$key])) {
                         continue;
                     }
-                    $value = $data[$key];
 
                     $_nodes = $nodes[$key] ?? [];
+
+                    $value = $data[$key];
+
+                    if (isset($_nodes['multiple']) && $_nodes['multiple']) {
+                        $value = array_filter(preg_split('/\ *,\ */', $value));
+                    }
 
                     if (is_string($value) && strlen($value) === 0) {
                         $value = null;
                         continue;
                     }
 
-                    if (is_array($value) && count(array_filter($value)) === 0) {
-                        $value = null;
-                        continue;
-                    }
-
                     if ($classMetadata->hasAssociation($key)) {
+
+                        if (is_array($value) && count(array_filter($value)) === 0) {
+                            $value = null;
+                            continue;
+                        }
+
                         $association = $classMetadata->getAssociationMapping($key);
                         if (is_string($value)) {
                             $value = $this->findByNameOrCreate($association['targetEntity'], $value, $context, in_array('persist', $association['cascade']));
@@ -94,17 +100,17 @@ class ImportNormalizer extends ObjectNormalizer
                         if (!$classMetadata->hasField($key)) {
                             if (isset($_nodes['class'])) {
                                 $value = $this->denormalize($value, $_nodes['class'], $format, ['nodes' => $_nodes]);
+                            } else {
+                                $this->propertyAccessor->setValue($object, $key, $value);
                             }
                         }
                     }
-
-                    $this->propertyAccessor->setValue($object, $key, $value);
                 }
-
                 return $object;
             }
 
             return parent::denormalize($data, $class, $format, $context);
+
         } catch (\Exception $exception) {
             $this->exceptions[] = $exception;
             return null;

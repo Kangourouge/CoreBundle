@@ -50,6 +50,9 @@ class IterableResultDecorator extends AbstractIterableResultDecorator
                         $value = call_user_func([$value, 'getName']);
                     }
                 }
+                else if (is_array($value)) {
+                    $value = implode(',', $value);
+                }
                 $row[] = (string) $value;
             } catch (\Exception $exception) {
                 $row[] = null;

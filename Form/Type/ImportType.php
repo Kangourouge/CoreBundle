@@ -22,6 +22,8 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Symfony\Component\OptionsResolver\Options;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\PropertyAccess\PropertyAccess;
+use Symfony\Component\PropertyAccess\PropertyAccessor;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 use Symfony\Component\Translation\TranslatorInterface;
 
@@ -61,18 +63,17 @@ class ImportType extends AbstractType
         $builder->addModelTransformer($dataTransformer);
 
         $builder
-            ->add('file', FileType::class, [
-                'attr' => ['accept' => 'text/csv'],
-                'required' => false
-            ])
             ->add('entities', CollectionType::class, [
                 'entry_type' => $options['entry_type'],
-                'entry_options' => ['label' => false, 'attr' => ['class' => 'form-collection-inline']],
+                'entry_options' => ['label' => false, 'label_format' => '%name%'],
                 'allow_add' => false,
                 'allow_delete' => false,
                 'prototype' => false,
-                'label' => false,
-                'attr' => ['class' => 'form-collection-import'],
+                'label' => false
+            ])
+            ->add('file', FileType::class, [
+                'attr' => ['accept' => 'text/csv'],
+                'required' => false
             ])
             ->add('confirm', CheckboxType::class, [
                 'required' => false
@@ -82,20 +83,56 @@ class ImportType extends AbstractType
     public function finishView(FormView $view, FormInterface $form, array $options)
     {
         $columns = $options['model']['columns'];
-        $view->vars['columns'] = $columns;
-        $view->vars['column_labels'] = array_column($columns, 'label');
+
+        $this->finishEntitiesView($view, $form, $options, $columns);
+
+        $isEmpty = $view->children['entities']->count() === 0;
+
+        $view->children['submit']->vars['label'] = sprintf('form.import.%s', $isEmpty ? 'import' : 'submit');
+
+        $view->vars['kangourouge'] = array_merge($view->vars['kangourouge'] ?? [], [
+            'import_columns'    => $columns,
+            'import_messages'   => $this->getMessages($options['normalizer']),
+            'import_csv_header'  => $this->getCSVHeader($columns),
+            'import_requirements' => $this->exportSettings['csv']
+        ]);
+    }
+
+    public function finishEntitiesView(FormView $view, FormInterface $form, array $options, array $columns)
+    {
+        $propertyAccessor = PropertyAccess::createPropertyAccessor();
+
+        $identifierColumns = array_filter($columns, function($column) {
+            return $column['identifier'] ?? false;
+        });
+
+        foreach($view->children['entities'] as $child) {
+            $_identifiers = [];
+
+            foreach ($identifierColumns as $column) {
+                $_identifiers[$column['label']] = $propertyAccessor->getValue($child->vars['value'], $column['property_path']);
+            }
+
+            $child->vars['kangourouge'] = array_merge($child->vars['kangourouge'] ?? [], [
+                'import_extra_fields' => $_identifiers
+            ]);
+        }
+    }
+
+    protected function getCSVHeader(array $columns)
+    {
+        $labels = array_column($columns, 'label');
 
         $fd = fopen('php://memory', 'r+');
-        fputcsv($fd, $view->vars['column_labels'], $this->exportSettings['csv']['delimiter'], $this->exportSettings['csv']['enclosure'], $this->exportSettings['csv']['escape_char']);
+        fputcsv($fd, $labels, $this->exportSettings['csv']['delimiter'], $this->exportSettings['csv']['enclosure'], $this->exportSettings['csv']['escape_char']);
         rewind($fd);
-        $view->vars['csv_prototype'] = stream_get_contents($fd);
+        $content = stream_get_contents($fd);
+        fclose($fd);
 
-        $content = null;
+        return $content;
+    }
 
-        $view->vars['attr']['class'] = 'form-import';
-        if (count($view->children['entities']->vars['value']) > 0) {
-            $view->vars['attr']['class'] .= ' form-import-confirm';
-        }
+    protected function getMessages(ImportNormalizer $normalizer) {
 
         $messages = [
             'info' => [],
@@ -115,13 +152,11 @@ class ImportType extends AbstractType
             $messages['warning'][] = $this->getMessage($entity);
         }
 
-        /** @var ImportNormalizer $normalizer */
-        $normalizer = $options['normalizer'];
         foreach($normalizer->getExceptions() as $exception) {
             $messages['danger'][] = $exception->getMessage();
         }
 
-        $view->vars['messages'] = $messages;
+        return $messages;
     }
 
     protected function getMessage($entity)
@@ -136,6 +171,7 @@ class ImportType extends AbstractType
         $resolver->setDefault('model', null);
         $resolver->setDefault('accept', 'text/csv');
         $resolver->setDefault('error_bubbling', true);
+        $resolver->setDefault('label_format', 'form.import.%name%');
         $resolver->setAllowedTypes('class', 'string');
         $resolver->setAllowedTypes('model', ['array', 'null']);
         $resolver->setAllowedTypes('entry_type', [FormInterface::class, 'string']);

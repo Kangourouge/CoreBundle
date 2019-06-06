@@ -73,7 +73,7 @@ class ImportModel implements ModelInterface
 
         $label = $this->getLabel($view);
 
-        if (count($view->children) > 0) {
+        if (count($view->children) > 0 && !in_array('choice', $view->vars['block_prefixes'])) {
             $children = [];
 
             if ($view->vars['compound'] && $view->parent !== null) {
@@ -96,42 +96,27 @@ class ImportModel implements ModelInterface
             return [];
         }
 
-        $type = 'text';
-        $class = null;
-
-        if (in_array('entity', $view->vars['block_prefixes'])) {
-            $type = 'entity';
-            $class = $view->vars['errors']->getForm()->getConfig()->getOption('class');
-        }
-        else if (in_array('number', $view->vars['block_prefixes'])) {
-            $type = 'number';
-        }
-        else if (in_array('date', $view->vars['block_prefixes'])) {
-            $type = 'date';
-        }
-        else if (in_array('datetime', $view->vars['block_prefixes'])) {
-            $type = 'datetime';
-        }
-        else if (in_array('choice', $view->vars['block_prefixes'])) {
-            $type = 'choice';
-        }
-        else if (in_array('checkbox', $view->vars['block_prefixes'])) {
-            $type = 'checkbox';
-        }
-
         $node = [
             'label' => strlen($prefixLabel) > 0 ? sprintf('%s - %s', $prefixLabel, $label) : $label,
             'name' => $view->vars['name'],
             'full_name' => $view->vars['full_name'],
             'property_path' => $propertyPath,
             'property' => $property,
-            'type' => $type,
-            'class' => $class,
+            'type' => $this->getType($view),
             'required' => $view->vars['required']
         ];
 
-        if (isset($view->vars['choices'])) {
-            $node['choices'] = array_column($view->vars['choices'], 'data', 'label');
+        if ($node['type'] === 'entity') {
+            $node = array_merge($node, [
+                'class' => $view->vars['errors']->getForm()->getConfig()->getOption('class'),
+            ]);
+        }
+
+        if ($node['type'] === 'choice') {
+            $node = array_merge($node, [
+                'choices' => array_column($view->vars['choices'], 'data', 'label'),
+                'multiple' => $view->vars['multiple']
+            ]);
         }
 
         if ($flatten) {
@@ -139,6 +124,19 @@ class ImportModel implements ModelInterface
         }
 
         return $node;
+    }
+
+    protected function getType(FormView $view)
+    {
+        $types = ['entity', 'number', 'date', 'datetime', 'choice', 'checkbox'];
+
+        foreach($types as $type) {
+            if (in_array($type, $view->vars['block_prefixes'])) {
+                return $type;
+            }
+        }
+
+        return 'text';
     }
 
     protected function getLabel(FormView $view) {

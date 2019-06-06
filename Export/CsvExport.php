@@ -28,6 +28,7 @@ class CsvExport implements ExportInterface
 
     public function render($filename, array $data, array $options = [])
     {
+
         $settings = array_replace_recursive($this->settings, $options['settings'] ?? []);
 
         $file = new \SplFileObject($filename, 'w');
