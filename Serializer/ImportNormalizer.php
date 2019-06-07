@@ -58,7 +58,7 @@ class ImportNormalizer extends ObjectNormalizer
                 $classMetadata = $this->entityManager->getClassMetadata($class);
 
                 foreach ($nodes as $key => $config) {
-                    if (!isset($data[$key])) {
+                    if (!array_key_exists($key, $data)) {
                         continue;
                     }
 
@@ -66,46 +66,43 @@ class ImportNormalizer extends ObjectNormalizer
 
                     $value = $data[$key];
 
-                    if (isset($_nodes['multiple']) && $_nodes['multiple']) {
+                    if (is_string($value) && isset($_nodes['multiple']) && $_nodes['multiple']) {
                         $value = array_filter(preg_split('/\ *,\ */', $value));
                     }
-
-                    if (is_string($value) && strlen($value) === 0) {
+                    else if (is_array($value) && count(array_filter($value)) === 0) {
                         $value = null;
-                        continue;
+                    }
+                    if (isset($_nodes['type']) && $_nodes['type'] === 'checkbox') {
+                        $value = (bool)(int) $value;
+                    }
+                    else if (is_string($value) && strlen($value) === 0) {
+                        $value = null;
                     }
 
                     if ($classMetadata->hasAssociation($key)) {
-
-                        if (is_array($value) && count(array_filter($value)) === 0) {
-                            $value = null;
-                            continue;
-                        }
-
                         $association = $classMetadata->getAssociationMapping($key);
                         if (is_string($value)) {
                             $value = $this->findByNameOrCreate($association['targetEntity'], $value, $context, in_array('persist', $association['cascade']));
-                        } else {
-                            if ($association['type'] === ClassMetadataInfo::ONE_TO_MANY || $association['type'] === ClassMetadataInfo::MANY_TO_MANY) {
-                                foreach ($value as &$_value) {
-                                    $_value = $this->denormalize($_value, $association['targetEntity'], $format, ['nodes' => $_nodes]);
-                                }
-                                unset($_value);
-                                $value = array_values($value);
-                            } else {
-                                $value = $this->denormalize($value, $association['targetEntity'], $format, ['nodes' => $_nodes]);
-                            }
                         }
-                    } else {
-                        if (!$classMetadata->hasField($key)) {
-                            if (isset($_nodes['class'])) {
-                                $value = $this->denormalize($value, $_nodes['class'], $format, ['nodes' => $_nodes]);
-                            } else {
-                                $this->propertyAccessor->setValue($object, $key, $value);
+                        else if ($association['type'] === ClassMetadataInfo::ONE_TO_MANY || $association['type'] === ClassMetadataInfo::MANY_TO_MANY) {
+                            foreach ($value as &$_value) {
+                                $_value = $this->denormalize($_value, $association['targetEntity'], $format, ['nodes' => $_nodes]);
                             }
+                            unset($_value);
+                            $value = array_values($value);
                         }
+                        else if ($value !== null) {
+                            $value = $this->denormalize($value, $association['targetEntity'], $format, ['nodes' => $_nodes]);
+                        }
+
                     }
+                    else if (!$classMetadata->hasField($key) && isset($_nodes['class'])) {
+                        $value = $this->denormalize($value, $_nodes['class'], $format, ['nodes' => $_nodes]);
+                    }
+
+                    $this->propertyAccessor->setValue($object, $key, $value);
                 }
+
                 return $object;
             }
 
@@ -153,6 +150,7 @@ class ImportNormalizer extends ObjectNormalizer
         }
 
         $entity = $this->entityManager->getRepository($class)->findOneBy(['name' => $name]);
+
 
         if ($entity === null) {
             if (!$createIfNotExists) {
