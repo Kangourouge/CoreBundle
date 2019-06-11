@@ -17,7 +17,7 @@
     <Row ss:StyleID="tbody">
     {% for value in row %}
         <Cell ss:Index="{{ loop.index }}" ss:StyleID="td">
-            <Data ss:Type="String">{{ value }}</Data>
+            <Data ss:Type="{{ typeof(value) in ['integer', 'double'] ? 'Number' : 'String' }}">{{ value }}</Data>
         </Cell>
     {% endfor %}
     </Row>

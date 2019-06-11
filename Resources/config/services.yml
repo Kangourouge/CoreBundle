@@ -40,6 +40,11 @@ services:
         resource: '../../Serializer'
         public: true
 
+    KRG\CoreBundle\Twig\:
+        resource: '../../Twig'
+        tags:
+            - { name: twig.extension }
+
     Twig_Extensions_Extension_Intl:
         class: Twig_Extensions_Extension_Intl
         tags:

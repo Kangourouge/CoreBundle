@@ -53,7 +53,7 @@ class IterableResultDecorator extends AbstractIterableResultDecorator
                 else if (is_array($value)) {
                     $value = implode(',', $value);
                 }
-                $row[] = (string) $value;
+                $row[] = $value;
             } catch (\Exception $exception) {
                 $row[] = null;
             }
