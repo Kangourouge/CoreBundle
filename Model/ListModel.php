@@ -76,7 +76,7 @@ class ListModel implements ModelInterface
         $query->setHydrationMode($this->getHydrationMode());
 
         $paginator = new Paginator($query);
-        $paginator->setUseOutputWalkers(false);
+        $paginator->setUseOutputWalkers($options['use_output_walkers']);
 
         $nbPages = 1;
         if ($options['max_per_page'] > 0) {
@@ -101,7 +101,8 @@ class ListModel implements ModelInterface
             'page' => 1,
             'max_per_page' => 10,
             'filter_form' => null,
-            'filter_data' => []
+            'filter_data' => [],
+            'use_output_walkers' => false,
         ]);
 
         $resolver->setAllowedTypes('request', Request::class);
