@@ -1,1 +1,3 @@
-# CoreBundle
+# [LEGACY] CoreBundle
+
+**Abandoned!**
