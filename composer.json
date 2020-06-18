@@ -22,5 +22,6 @@
       "KRG\\CoreBundle": ""
     }
   },
-  "target-dir" : "KRG/CoreBundle"
+  "target-dir" : "KRG/CoreBundle",
+  "abandoned": true
 }
